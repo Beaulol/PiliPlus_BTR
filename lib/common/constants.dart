@@ -1,5 +1,7 @@
 abstract final class Constants {
-  static const appName = 'PiliPlus';
+  static const appName = bool.fromEnvironment('dart.vm.product')
+      ? 'PiliPlus BTR Turbo'
+      : 'BTR Debugger';
   static const sourceCodeUrl = 'https://github.com/bggRGjQaUbCoE/PiliPlus';
 
   // 27eb53fc9058f8c3  移动端 Android

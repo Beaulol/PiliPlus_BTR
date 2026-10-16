@@ -1,4 +1,7 @@
-# PiliPlus BTR 1.0.0
+# PiliPlus BTR Turbo 1.0.1
+
+正式版 Android 应用名称为 **PiliPlus BTR Turbo**，调试测试版统一为 **BTR Debugger**。
+两者可同时安装；当前提供 ARM64 Release 和 Debug 构建。
 
 基于 [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) 2.1.6.2 的 Android BTR 集成版本。
 在播放页「⋮ → BTR 加速设置」中可切换全接管（增强调度）/兼容模式、自动线程、
@@ -7,7 +10,7 @@
 实现说明、构建方法与验证记录见 [BTR 模块文档](docs/BTR.md)。
 下载调度思路参考 [Bilibili-thread-ripper](https://github.com/MrTangLuyao/Bilibili-thread-ripper)，
 模块使用 Dart 实现，项目继续遵循原有 GPL-3.0 许可证。
-当前已验证 Android ARM64 调试版；其他平台的 BTR 效果尚未验证。
+Android ARM64 已完成实机调试验证；其他平台的 BTR 效果尚未验证。
 
 以下保留上游项目介绍及贡献者信息。
 

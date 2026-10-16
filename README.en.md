@@ -1,4 +1,7 @@
-# PiliPlus BTR 1.0.0
+# PiliPlus BTR Turbo 1.0.1
+
+The Android release app is named **PiliPlus BTR Turbo**; debug builds are named
+**BTR Debugger**. They use separate package IDs and can be installed together.
 
 Android BTR integration based on PiliPlus 2.1.6.2. Includes enhanced/compatible
 download modes, adaptive concurrency, CDN selection, connection reuse, bounded
