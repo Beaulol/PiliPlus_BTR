@@ -1,72 +1,42 @@
-# PiliPlus BTR Turbo 1.0.1
-
-The Android release app is named **PiliPlus BTR Turbo**; debug builds are named
-**BTR Debugger**. They use separate package IDs and can be installed together.
-
-Android BTR integration based on PiliPlus 2.1.6.2. Includes enhanced/compatible
-download modes, adaptive concurrency, CDN selection, connection reuse, bounded
-prefetch caching and slow-block recovery. See [BTR documentation](docs/BTR.md)
-for implementation details and validation. The original GPL-3.0 license and
-upstream project information below are retained.
-
-<div align="center">
-    <img width="200" height="200" src="assets/images/logo/logo.png" alt="PiliPlus logo">
-    <h1>PiliPlus</h1>
-</div>
-
-<div align="center">
+# PiliPlus BTR Turbo
 
 [中文](README.md) | English
 
-![GitHub repo size](https://img.shields.io/github/repo-size/bggRGjQaUbCoE/PiliPlus)
-![GitHub Repo stars](https://img.shields.io/github/stars/bggRGjQaUbCoE/PiliPlus)
-![GitHub all releases](https://img.shields.io/github/downloads/bggRGjQaUbCoE/PiliPlus/total)
+An Android derivative of PiliPlus that brings Bilibili-thread-ripper (BTR) download scheduling ideas to the native player, aiming to reduce slow starts and repeated buffering on some overseas connections.
 
-</div>
+Based on PiliPlus 2.1.6.2. The current release is **1.0.1**; see the [v1.0.1 source branch](https://github.com/Beaulol/PiliPlus_BTR/tree/v1.0.1) and [release notes](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/version1.0.1.txt).
 
-<div align="center">
-    <p>A third-party Bilibili client built with Flutter</p>
+## What this project adds
 
-<img src="assets/screenshots/510shots_so.png" width="32%" alt="PiliPlus mobile screenshot" />
-<img src="assets/screenshots/174shots_so.png" width="32%" alt="PiliPlus mobile screenshot" />
-<img src="assets/screenshots/850shots_so.png" width="32%" alt="PiliPlus mobile screenshot" />
-<br/>
-<img src="assets/screenshots/main_screen.png" width="96%" alt="PiliPlus desktop screenshot" />
-<br/>
-</div>
+- A Dart BTR module that serves ordered media data through a local HTTP proxy to mpv, retaining PiliPlus playback, quality selection, audio tracks and danmaku.
+- Concurrent Range downloads, multiple CDN candidates, connection reuse, shared audio/video concurrency limits, retries and fallback handling.
+- Compatible mode for player-driven requests, and enhanced mode with bounded block caching, rolling prefetch, slow-block recovery and cancellation after seeking.
+- Adaptive concurrency based on playback buffer, bounded by the selected maximum.
+- In-player BTR settings that apply at the current position, with scrolling in landscape.
+- Download speed beneath the loading indicator, connection/buffer/cache statistics, and a local USB log capture script.
 
-<br/>
+The core scheduling ideas come from BTR; the Android module is implemented in Dart. Enhanced mode manages downloads, while mpv remains responsible for decoding and the playback timeline.
 
-## Download
+## Usage
 
-Download a build from [Releases](https://github.com/bggRGjQaUbCoE/PiliPlus/releases), or clone the repository and build it locally.
+Open **⋮ → BTR settings** on the video page, enable acceleration, choose a mode, concurrency settings and CDN group, then apply. Playback reloads at the current position and the settings are saved as defaults.
 
-## Disclaimer
+BTR is disabled by default. Release builds are named **PiliPlus BTR Turbo** and debug builds **BTR Debugger**. They can coexist and keep separate accounts and settings.
 
-PiliPlus is a personal project developed for educational purposes, intended only for learning and testing. Please delete it within 24 hours of downloading.
-All APIs used were collected from the official website. This project does not provide any cracked content.
+Android ARM64 on-demand playback is the main validated target. Live streams, offline media, casting and EDL media retain their existing paths. Partial-block resume, SIDX-based deadline scheduling and BTR URL refresh have not been ported. Results depend on the connection, CDN and bitrate; a controlled comparison with the web version is still pending.
 
-Credit to the original project: [guozhigq/pilipala](https://github.com/guozhigq/pilipala).
-Credit to the upstream project: [orz12/PiliPalaX](https://github.com/orz12/PiliPalaX).
-This repository makes more extensive changes. Thank you to the original authors for sharing their work as open source.
+## Development
 
-Thank you for using PiliPlus.
+Switch to the desired version branch before building. See the [BTR documentation](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/docs/BTR.md) for environment setup, architecture, tests and device validation, and the [changelog](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/CHANGELOG.md) for changes.
 
 ## Acknowledgements
 
-- [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
-- [flutter_meedu_videoplayer](https://github.com/zezo357/flutter_meedu_videoplayer)
-- [media-kit](https://github.com/media-kit/media-kit)
-- [dio](https://pub.dev/packages/dio)
-- And others
+- [bggRGjQaUbCoE/PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus): the client, player and Bilibili functionality.
+- [MrTangLuyao/Bilibili-thread-ripper](https://github.com/MrTangLuyao/Bilibili-thread-ripper): multi-Range, multi-CDN and playback-oriented scheduling ideas.
+- [nishuodedui1145-del/PiliPlus](https://github.com/nishuodedui1145-del/PiliPlus): its open-source work exploring PiliPlus and BTR integration.
 
-## Star History
+Thanks also to [PiliPala](https://github.com/guozhigq/pilipala), [PiliPalaX](https://github.com/orz12/PiliPalaX), upstream contributors and dependency authors.
 
-<a href="https://star-history.dera.page/#bggRGjQaUbCoE/PiliPlus&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
- </picture>
-</a>
+## License
 
+The original [GPL-3.0 license](LICENSE), source attribution and third-party resource licenses are retained. For the full upstream feature list, please visit the upstream projects.

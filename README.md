@@ -1,271 +1,47 @@
-# PiliPlus BTR Turbo 1.0.1
-
-正式版 Android 应用名称为 **PiliPlus BTR Turbo**，调试测试版统一为 **BTR Debugger**。
-两者可同时安装；当前提供 ARM64 Release 和 Debug 构建。
-
-基于 [PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus) 2.1.6.2 的 Android BTR 集成版本。
-在播放页「⋮ → BTR 加速设置」中可切换全接管（增强调度）/兼容模式、自动线程、
-并发上限及 CDN 节点模式；支持连接复用、分块缓存、滚动预取和慢块补救。
-
-实现说明、构建方法与验证记录见 [BTR 模块文档](docs/BTR.md)。
-下载调度思路参考 [Bilibili-thread-ripper](https://github.com/MrTangLuyao/Bilibili-thread-ripper)，
-模块使用 Dart 实现，项目继续遵循原有 GPL-3.0 许可证。
-Android ARM64 已完成实机调试验证；其他平台的 BTR 效果尚未验证。
-
-以下保留上游项目介绍及贡献者信息。
-
-<div align="center">
-    <img width="200" height="200" src="assets/images/logo/logo.png">
-</div>
-
-
-
-<div align="center">
-    <h1>PiliPlus</h1>
-<div align="center">
+# PiliPlus BTR Turbo
 
 中文 | [English](README.en.md)
 
-![GitHub repo size](https://img.shields.io/github/repo-size/bggRGjQaUbCoE/PiliPlus) 
-![GitHub Repo stars](https://img.shields.io/github/stars/bggRGjQaUbCoE/PiliPlus) 
-![GitHub all releases](https://img.shields.io/github/downloads/bggRGjQaUbCoE/PiliPlus/total) 
-</div>
-    <p>使用Flutter开发的BiliBili第三方客户端</p>
-    
-<img src="assets/screenshots/510shots_so.png" width="32%" alt="home" />
-<img src="assets/screenshots/174shots_so.png" width="32%" alt="home" />
-<img src="assets/screenshots/850shots_so.png" width="32%" alt="home" />
-<br/>
-<img src="assets/screenshots/main_screen.png" width="96%" alt="home" />
-<br/>
-</div>
+基于 PiliPlus 的 Android 衍生客户端，将 Bilibili-thread-ripper（BTR）的多连接下载与调度思路接入原生播放器，改善部分海外线路下视频起播慢、缓冲频繁的问题。
 
+客户端基于 PiliPlus 2.1.6.2，当前发布版本为 **1.0.1**。对应源码见 [v1.0.1 分支](https://github.com/Beaulol/PiliPlus_BTR/tree/v1.0.1)，修改记录见 [version1.0.1.txt](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/version1.0.1.txt)。
 
-<br/>
+## 本项目做了什么
 
-## 适配平台
+- **接入 Android BTR 模块**：使用 Dart 实现本地 HTTP 代理，将下载的数据按顺序交给 mpv，继续使用 PiliPlus 的播放器、画质、音轨和弹幕功能。
+- **实现并发下载与调度**：多 Range 分块、多 CDN 候选、连接复用、音视频共享并发上限、超时重试与失败回退。
+- **提供两种工作模式**：兼容模式按播放器请求并发下载；全接管（增强调度）增加分块缓存、滚动预取、慢块补救与拖动后旧任务清理。
+- **根据缓冲调整并发**：自动线程模式在缓冲不足时增加并发、缓冲充足时降低，并受用户设置的上限约束。
+- **完善播放页设置**：在视频内调整 BTR 开关、工作模式、自动线程、并发上限和节点分组，应用后从当前进度重载；横屏支持上下滚动。
+- **增加运行状态与速度显示**：加载图标下方显示 KB/s 或 MB/s，设置面板展示活动连接、缓冲余量和缓存状态，并提供本机 USB 日志采集脚本。
 
-- [x] Android
-- [x] iOS
-- [x] Pad
-- [x] Windows
-- [x] Linux
+核心下载策略参考原版 BTR，Android 模块使用 Dart 重新实现。这里的“全接管”指增强下载调度，解码和播放时间线仍由 mpv 管理。
 
-[![Packaging status](https://repology.org/badge/vertical-allrepos/piliplus.svg)](https://repology.org/project/piliplus/versions)
+## 使用
 
-## refactor
+1. 在视频播放页打开 **⋮ → BTR 加速设置**。
+2. 开启“多线程加速”，选择工作模式、自动线程、并发上限和原始／大陆／海外节点。
+3. 点击“应用”，视频从当前进度重新加载，设置同时保存为默认值。
 
-- [ ] gRPC [wip]
-- [x] 用户界面
-- [x] 其他
+BTR 默认关闭。正式版名称为 **PiliPlus BTR Turbo**，测试版名称为 **BTR Debugger**；两版可同时安装，账号与设置各自保存。
 
-## feat
+当前主要验证 Android ARM64 点播播放。直播、离线视频、投屏和 EDL 多段视频使用原有路径；部分块断点续传、基于 SIDX 的精确调度和 BTR 播放地址自动刷新尚未移植。实际收益取决于线路、节点及视频码率，尚未完成与网页端的受控速度对比。
 
-- [x] 编辑动态
-- [x] DLNA 投屏
-- [x] 离线缓存/播放
-- [x] 移动端支持点击弹幕悬停，点赞、复制、举报 by [@My-Responsitories](https://github.com/My-Responsitories)
-- [x] 播放音频
-- [x] 跳过番剧片头/片尾
-- [x] 安卓端 `loudnorm` 适配 by [@My-Responsitories](https://github.com/My-Responsitories)
-- [x] Win/Mac 支持极验、短信登录 by [@My-Responsitories](https://github.com/My-Responsitories)
-- [x] 视频截取动图 by [@My-Responsitories](https://github.com/My-Responsitories)
-- [x] AI 原声翻译
-- [x] SuperChat
-- [x] 播放课堂视频
-- [x] 发起投票
-- [x] 发布动态/评论支持`富文本编辑`/`表情显示`/`@用户`
-- [x] 修改消息设置
-- [x] 修改聊天设置
-- [x] 展示折叠消息
-- [x] 查看用户图文
-- [x] 动态话题
-- [x] 直播分区
-- [x] 分享`视频`/`番剧`/`动态`/`专栏`/`直播`至消息
-- [x] 创建/修改/删除关注分组
-- [x] 移除粉丝
-- [x] 直播弹幕发送表情
-- [x] 收藏夹排序
-- [x] 稍后再看 ~~`未看`~~ / `未看完` / ~~`已看完`~~ 分类
-- [x] WebDAV 备份/恢复设置
-- [x] 保存评论/动态
-- [x] 高级弹幕 by [@My-Responsitories](https://github.com/My-Responsitories)
-- [x] 取消/置顶评论
-- [x] 记笔记
-- [x] 多账号支持 by [@My-Responsitories](https://github.com/My-Responsitories)
-- [x] 屏蔽带货动态/评论
-- [x] 互动视频
-- [x] 发评/动态反诈
-- [x] 高能进度条
-- [x] 滑动跳转预览视频缩略图
-- [x] Live Photo
-- [x] 复制/移动/排序收藏夹/稍后再看视频
-- [x] 超分辨率
-- [x] 合并弹幕
-- [x] 会员彩色弹幕
-- [x] 播放全部/继续播放/倒序播放
-- [x] Cookie登录
-- [x] 显示视频分段信息
-- [x] 调节字幕大小
-- [x] 调节全屏弹幕大小
-- [x] 收藏夹/稍后再看多选删除
-- [x] 搜索用户动态
-- [x] 直播弹幕
-- [x] 修改头像/用户名/签名/性别/生日
-- [x] 创建/编辑/删除收藏夹
-- [x] 评论楼中楼查看对话
-- [x] 评论楼中楼定位点击查看的评论
-- [x] 评论楼中楼按热度/时间排序
-- [x] 评论点踩
-- [x] 私信发图
-- [x] 投币动画
-- [x] 取消/追番，更新追番状态
-- [x] 取消/订阅合集
-- [x] SponsorBlock
-- [x] 显示视频完整合集
-- [x] 三连动画
-- [x] 番剧三连
-- [x] 带图评论
-- [x] 视频TAG
-- [x] 筛选搜索
-- [x] 转发动态
-- [x] 合集图片
-- [x] 删除/置顶/撤回私信
-- [x] 举报用户/评论/视频/动态
-- [x] 删除/发布/置顶文本/图片动态
-- [x] 其他
+## 开发与版本说明
 
-## opt
+构建前切换到需要的版本分支，并按 [BTR 模块文档](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/docs/BTR.md) 配置 Flutter、Android SDK 和本地环境。该文档同时包含模块结构、测试命令及实机验证记录。
 
-- [x] 专栏界面
-- [x] 私信界面
-- [x] 收藏面板
-- [x] PIP
-- [x] 视频封面
-- [x] 回复界面
-- [x] 系统通知
-- [x] 评论显示
-- [x] 亮度调节
-- [x] 视频播放
-- [x] 视频staff
-- [x] 防止bottomsheet遮挡全屏视频
-- [x] 其他
-
-## fix
-
-- [x] 番剧分集点赞/投币/收藏
-- [x] bugs
-
-<br/>
-
-## 功能
-
-- [x] 推荐视频列表(app端)
-- [x] 最热视频列表
-- [x] 热门直播
-- [x] 番剧列表
-- [x] 屏蔽黑名单内用户视频
-- [x] 无痕模式（播放视为未登录）
-- [x] 游客模式（推荐视为未登录）
-
-- [x] 用户相关
-  - [x] 粉丝、关注用户、拉黑用户查看
-  - [x] 用户主页查看
-  - [x] 关注/取关用户
-  - [x] 离线缓存
-  - [x] 稍后再看
-  - [x] 观看记录
-  - [x] 我的收藏
-  - [x] 站内私信
-  
-- [x] 动态相关
-  - [x] 全部、投稿、番剧分类查看
-  - [x] 动态评论查看
-  - [x] 动态评论回复功能
-
-- [x] 视频播放相关
-  - [x] 双击快进/快退
-  - [x] 双击播放/暂停
-  - [x] 垂直方向调节亮度/音量
-  - [x] 垂直方向上滑全屏、下滑退出全屏
-  - [x] 水平方向手势快进/快退
-  - [x] 全屏方向设置
-  - [x] 倍速选择/长按2倍速
-  - [x] 硬件加速（视机型而定）
-  - [x] 画质选择（高清画质未解锁）
-  - [x] 音质选择（视视频而定）
-  - [x] 解码格式选择（视视频而定）
-  - [x] 弹幕
-  - [x] 字幕
-  - [x] 记忆播放
-  - [x] 视频比例：高度/宽度适应、填充、包含等
-     
-- [x] 搜索相关
-  - [x] 热搜
-  - [x] 搜索历史
-  - [x] 默认搜索词
-  - [x] 投稿、番剧、直播间、用户搜索
-  - [x] 视频搜索排序、按时长筛选
-    
-- [x] 视频详情页相关
-  - [x] 视频选集(分p)切换
-  - [x] 点赞、投币、收藏/取消收藏
-  - [x] 相关视频查看
-  - [x] 评论用户身份标识
-  - [x] 评论(排序)查看、二楼评论查看
-  - [x] 主楼、二楼评论回复功能
-  - [x] 评论点赞
-  - [x] 评论笔记图片查看、保存
-
-- [x] 设置相关
-  - [x] 画质、音质、解码方式预设      
-  - [x] 图片质量设定
-  - [x] 主题模式：亮色/暗色/跟随系统
-  - [x] 震动反馈(可选)
-  - [x] 高帧率
-  - [x] 自动全屏
-  - [x] 横屏适配
-- [ ] 等等
-
-<br/>
-
-## 下载
-
-可以从 [Releases](https://github.com/bggRGjQaUbCoE/PiliPlus/releases) 下载，或克隆仓库拉取代码后在本地编译。
-
-<br/>
-
-## 声明
-
-此项目（PiliPlus）是个人为了兴趣而开发，仅用于学习和测试，请于下载后24小时内删除。
-所用API皆从官方网站收集，不提供任何破解内容。
-在此致敬原作者：[guozhigq/pilipala](https://github.com/guozhigq/pilipala)
-在此致敬上游作者：[orz12/PiliPalaX](https://github.com/orz12/PiliPalaX)
-本仓库做了更激进的修改，感谢原作者的开源精神。
-
-感谢使用
-
-
-<br/>
+- [1.0.1 更新说明](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/version1.0.1.txt)
+- [修改记录](https://github.com/Beaulol/PiliPlus_BTR/blob/v1.0.1/CHANGELOG.md)
 
 ## 致谢
 
-- [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
-- [flutter_meedu_videoplayer](https://github.com/zezo357/flutter_meedu_videoplayer)
-- [media-kit](https://github.com/media-kit/media-kit)
-- [dio](https://pub.dev/packages/dio)
-- 等等
+- [bggRGjQaUbCoE/PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus)：提供客户端基础、播放器及完整的 B 站功能。
+- [MrTangLuyao/Bilibili-thread-ripper](https://github.com/MrTangLuyao/Bilibili-thread-ripper)：提供多 Range、多 CDN 和面向播放的下载调度思路。
+- [nishuodedui1145-del/PiliPlus](https://github.com/nishuodedui1145-del/PiliPlus)：感谢其 PiliPlus 与 BTR 的整合探索及开源分享，为同方向的 Android 集成提供参考。
 
-<br/>
-<br/>
-<br/>
+同时感谢 PiliPlus 所继承的 [PiliPala](https://github.com/guozhigq/pilipala)、[PiliPalaX](https://github.com/orz12/PiliPalaX)，以及上游贡献者与第三方依赖作者。
 
-## Star History
+## 许可
 
-<a href="https://star-history.dera.page/#bggRGjQaUbCoE/PiliPlus&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
- </picture>
-</a>
+本项目保留 PiliPlus 的 [GPL-3.0 许可证](LICENSE)，原有源码作者标记和第三方资源许可证保留。上游项目的完整功能介绍请访问各自仓库。
