@@ -186,6 +186,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   late final RxBool flipY = false.obs;
 
   final RxBool isBuffering = true.obs;
+  final RxString loadingSpeed = '0 KB/s'.obs;
 
   /// 全屏方向
   // ignore: unnecessary_getters_setters
@@ -681,20 +682,69 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   BtrProxy? _btrProxy;
   BtrSession? _btrSession;
   Timer? _btrStatsTimer;
+  // Keep bounded playback diagnostics available during USB tests in release.
+  static const _btrDiagnostics = bool.fromEnvironment(
+    'BTR_DIAGNOSTICS',
+    defaultValue: true,
+  );
+  Timer? _loadingSpeedTimer;
+
+  void _startLoadingSpeedUpdates() {
+    _loadingSpeedTimer?.cancel();
+    loadingSpeed.value = '0 KB/s';
+    BtrSession? sampledSession;
+    var previousBytes = 0;
+    final clock = Stopwatch()..start();
+    _loadingSpeedTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      final elapsed = clock.elapsedMicroseconds / 1000000;
+      clock.reset();
+      final session = _btrSession;
+      double bytesPerSecond = 0;
+      if (session != null) {
+        final bytes = session.stats.downloadedBytes;
+        // A new session starts its byte counter at zero.
+        final delta =
+            bytes - (identical(session, sampledSession) ? previousBytes : 0);
+        if (elapsed > 0 && delta >= 0) bytesPerSecond = delta / elapsed;
+        sampledSession = session;
+        previousBytes = bytes;
+      } else {
+        sampledSession = null;
+        previousBytes = 0;
+        if (_videoPlayerController case final NativePlayer player
+            when dataSource is! FileSource &&
+                (dataStatus.loading || isBuffering.value)) {
+          try {
+            bytesPerSecond =
+                double.tryParse(player.getProperty('cache-speed')) ?? 0;
+          } catch (_) {
+            // The property can be unavailable while a media source is opening.
+          }
+        }
+      }
+      if (!bytesPerSecond.isFinite || bytesPerSecond < 0) bytesPerSecond = 0;
+      loadingSpeed.value = bytesPerSecond >= 1024 * 1024
+          ? '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB/s'
+          : '${(bytesPerSecond / 1024).toStringAsFixed(0)} KB/s';
+    });
+  }
 
   BtrStats? get btrStats => _btrSession?.stats;
 
   void _updateBtrPlayback() {
     final state = _videoPlayerController?.state;
     _btrSession?.updatePlayback(
-      bufferedAhead: ((state?.buffer.inMilliseconds ?? 0) -
-          (state?.position.inMilliseconds ?? 0)) / 1000,
+      bufferedAhead:
+          ((state?.buffer.inMilliseconds ?? 0) -
+              (state?.position.inMilliseconds ?? 0)) /
+          1000,
       buffering: isBuffering.value,
       playing: state?.playing ?? false,
     );
   }
 
   Future<DataSource> _prepareBtrSource(DataSource source) async {
+    _startLoadingSpeedUpdates();
     _btrStatsTimer?.cancel();
     _btrStatsTimer = null;
     final oldSession = _btrSession;
@@ -724,36 +774,50 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         return source;
       }
       _btrSession = session;
-      if (kDebugMode) {
-        debugPrint('BTR session: ceiling=${Pref.btrConcurrency}, ${BtrCdnMode.values[Pref.btrCdnMode].name}, ${BtrTakeover.values[Pref.btrTakeover].name}, auto=${Pref.btrAutoConcurrency}');
+      if (_btrDiagnostics) {
+        debugPrint(
+          'BTR session: ceiling=${Pref.btrConcurrency}, ${BtrCdnMode.values[Pref.btrCdnMode].name}, ${BtrTakeover.values[Pref.btrTakeover].name}, auto=${Pref.btrAutoConcurrency}',
+        );
         var lastPieces = -1;
         _btrStatsTimer = Timer.periodic(const Duration(seconds: 2), (_) {
           final stats = session.stats;
           final state = _videoPlayerController?.state;
           session.updatePlayback(
-            bufferedAhead: ((state?.buffer.inMilliseconds ?? 0) -
-                (state?.position.inMilliseconds ?? 0)) / 1000,
+            bufferedAhead:
+                ((state?.buffer.inMilliseconds ?? 0) -
+                    (state?.position.inMilliseconds ?? 0)) /
+                1000,
             buffering: isBuffering.value,
             playing: state?.playing ?? false,
           );
-          if (stats.completedPieces == lastPieces && stats.activeRequests == 0 &&
+          if (stats.completedPieces == lastPieces &&
+              stats.activeRequests == 0 &&
               !(state?.playing ?? false)) {
             return;
           }
           lastPieces = stats.completedPieces;
-          debugPrint('BTR stats: bytes=${stats.downloadedBytes}, delivered=${stats.deliveredBytes}, pieces=${stats.completedPieces}, active=${stats.activeRequests}/${stats.concurrency}, ahead=${stats.bufferedAhead.toStringAsFixed(1)}, position=${state?.position.inSeconds}, buffering=${isBuffering.value}, hedges=${stats.hedges}, cache=${stats.cacheBytes}, hits=${stats.cacheHits}, retries=${stats.retries}, fallbacks=${stats.fallbacks}, host=${stats.lastHost}');
+          debugPrint(
+            'BTR stats: bytes=${stats.downloadedBytes}, delivered=${stats.deliveredBytes}, pieces=${stats.completedPieces}, active=${stats.activeRequests}/${stats.concurrency}, ahead=${stats.bufferedAhead.toStringAsFixed(1)}, position=${state?.position.inSeconds}, buffering=${isBuffering.value}, hedges=${stats.hedges}, cache=${stats.cacheBytes}, hits=${stats.cacheHits}, retries=${stats.retries}, fallbacks=${stats.fallbacks}, host=${stats.lastHost}',
+          );
         });
       }
       return NetworkSource(
-        videoSource: session.register(source.videoSource, bitRate: source.videoBitRate),
+        videoSource: session.register(
+          source.videoSource,
+          bitRate: source.videoBitRate,
+        ),
         audioSource: source.audioSource == null
             ? null
-            : session.register(source.audioSource!, bitRate: source.audioBitRate, audio: true),
+            : session.register(
+                source.audioSource!,
+                bitRate: source.audioBitRate,
+                audio: true,
+              ),
       );
     } catch (error) {
       _btrSession?.dispose();
       _btrSession = null;
-      if (kDebugMode) debugPrint('BTR 初始化失败，使用原始播放地址：$error');
+      if (_btrDiagnostics) debugPrint('BTR 初始化失败，使用原始播放地址');
       return source;
     } finally {
       oldSession?.dispose();
@@ -1751,6 +1815,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     }
 
     _playerCount = 0;
+    _loadingSpeedTimer?.cancel();
+    _loadingSpeedTimer = null;
+    loadingSpeed.value = '0 KB/s';
     _btrStatsTimer?.cancel();
     _btrStatsTimer = null;
     _btrSession?.dispose();

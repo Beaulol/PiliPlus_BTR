@@ -1,7 +1,11 @@
-# PiliPlus BTR 1.0.0
+# PiliPlus BTR Turbo 1.0.1
 
-本版本基于 PiliPlus 2.1.6.2，应用版本为 `1.0.0+1`。
-`main` 和 `v1.0.0` 是本次发布的两个分支名称。
+本版本基于 PiliPlus 2.1.6.2，应用版本为 `1.0.1+2`。
+正式版名称为 `PiliPlus BTR Turbo`，包名 `com.example.piliplus`；
+测试版名称为 `BTR Debugger`，包名 `com.example.piliplus.debug`。
+二者可同时安装，各自保存账号和设置；测试版可覆盖之前的调试包。
+正式版使用本地专用发布密钥，测试版保留原调试签名。
+密钥及 `android/key.properties` 不提交 Git，后续正式版更新需保留该密钥。
 
 这是在用户提供的 PiliPlus 源码上新增的 Dart 下载模块，参考
 [Bilibili-thread-ripper](https://github.com/MrTangLuyao/Bilibili-thread-ripper)
@@ -14,10 +18,17 @@
 节点模式，以及「全接管（增强调度）/兼容模式」和「自动线程数」。面板显示当前
 连接、前方缓冲秒数、缓存大小和慢块补救次数。
 点击「应用」后从当前进度重新加载，保留播放/暂停状态，并保存为默认值。
+BTR 设置弹窗的标题和内容可整体上下滚动，底部「取消/应用」固定显示，
+横屏时减少弹窗上下留白以保留更多可用空间。
 正在初始化的视频会保存设置，在下次加载时生效；离线视频不显示该入口。
 全局「我的 → 设置 → 音视频设置」仍可设置这些默认值。默认关闭，
 默认并发上限 8、大陆节点模式。设置在下次加载视频或切换清晰度时生效。
 关闭后重新加载视频即可恢复播放器原有下载路径。
+
+加载图标下方显示当前下载速度（KB/s 或 MB/s），每 500 毫秒更新一次，
+不再显示缓存时间点。BTR 开启时使用音视频上游实际接收字节的合计速率
+（包含重试/慢块补救流量），不将本地缓存读取计作网络下载；其他网络播放
+使用播放器的 `cache-speed`。暂无数据或没有新下载时显示 `0 KB/s`。
 
 - 原始节点：对 PiliPlus 原本选择的节点并发请求，可单独验证并发收益。
 - 大陆/海外节点：在可迁移的 `/upgcxcode/` 地址上保留签名并替换 CDN 主机，
@@ -109,9 +120,31 @@ Flutter、Pub/Gradle 缓存、Android SDK、JDK 及临时目录，并将相关�
 ```powershell
 .\tool\build-android.ps1
 .\tool\build-android.ps1 -Install -Device YOUR_DEVICE_SERIAL
+.\tool\build-android.ps1 -Mode release
 ```
 
 调试包包名为 `com.example.piliplus.debug`，可以与正式版共存。
+正式构建需提前配置被 Git 忽略的 `android/key.properties`，构建脚本不会
+在缺少发布签名配置时生成正式包。
+
+USB 实机日志（两种构建均保留 BTR 会话及每两秒一次的下载/缓冲统计）：
+
+```powershell
+.\tool\watch-android-logs.ps1 -Device YOUR_DEVICE_SERIAL
+.\tool\watch-android-logs.ps1 -Device YOUR_DEVICE_SERIAL -Background
+```
+
+日志保存在本地日志目录（可通过 `BTR_LOG_DIR` 配置），按应用 UID 过滤，应用进程重启后仍可继续
+采集。前台模式按 Ctrl+C 停止；后台模式会输出进程编号及停止命令。
+USB 断开后需要重新启动采集。此功能只在本机读取日志，不上传到外部服务。
+
+2026-10-16：`1.0.1+2` 的 Release 和 Debug 均已构建、验证签名并安装到
+Android 实机。安装包元数据确认正式版名称为 PiliPlus BTR Turbo、无 DEBUGGABLE
+属性且包含 AOT `libapp.so`；测试版名称为 BTR Debugger、保留 DEBUGGABLE
+属性，签名与 1.0.0 调试包相同。两种构建均关闭界面 Debug 横幅。
+用户确认正式版正常打开并播放、加载图标下方能显示速度。按两个应用 UID
+过滤的后台日志采集已运行；正式版与测试版 BTR 开关各自独立保存，
+测试 BTR 调度前需在对应应用内开启并应用设置。
 2026-10-14 已成功编译 ARM64 调试 APK：
 `build/app/outputs/flutter-apk/app-debug.apk`，应用名 `PiliPlus debug`。
 完整 Flutter 环境下，BTR 模块及播放器/设置接入文件的静态分析已通过，

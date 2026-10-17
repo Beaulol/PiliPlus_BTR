@@ -154,6 +154,7 @@ test*
 # Local tooling, distribution binaries, and credentials
 /.tooling/
 /packages/
+/logs/
 *.apk
 *.aab
 *.keystore
